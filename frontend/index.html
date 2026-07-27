@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign in — M-Pesa Intelligence System</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div>
+        <div class="brand-name">M-Pesa Intel</div>
+        <div class="brand-sub">Transaction Intelligence</div>
+      </div>
+    </div>
+
+    <div id="login-view">
+      <h1>Welcome back</h1>
+      <p class="lead">Sign in to access your transaction intelligence dashboard.</p>
+      <div class="error-banner" id="login-error"></div>
+      <form id="login-form">
+        <div class="field">
+          <label>Work email</label>
+          <input type="email" id="login-email" placeholder="you@company.com" required />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required />
+        </div>
+        <button class="btn btn-primary" type="submit" id="login-btn">Sign in</button>
+      </form>
+      <p class="switch-link">New to the platform? <a href="#" id="show-register">Create an account</a></p>
+    </div>
+
+    <div id="register-view" style="display:none;">
+      <h1>Create your account</h1>
+      <p class="lead">Set up secure access for your finance team.</p>
+      <div class="error-banner" id="register-error"></div>
+      <form id="register-form">
+        <div class="field">
+          <label>Full name</label>
+          <input type="text" id="reg-name" placeholder="Jane Wanjiku" required />
+        </div>
+        <div class="field">
+          <label>Company</label>
+          <input type="text" id="reg-company" placeholder="Your finance company" />
+        </div>
+        <div class="field">
+          <label>Work email</label>
+          <input type="email" id="reg-email" placeholder="you@company.com" required />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="At least 6 characters" required minlength="6" />
+        </div>
+        <button class="btn btn-primary" type="submit" id="register-btn">Create account</button>
+      </form>
+      <p class="switch-link">Already have access? <a href="#" id="show-login">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

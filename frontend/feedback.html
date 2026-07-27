@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Feedback — M-Pesa Intelligence System</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-root"></aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Feedback</div>
+        <div class="page-sub">Spot a wrong prediction, a bug, or have an idea? Tell us — it helps us improve the models and the product.</div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 0.8fr; gap:18px;">
+      <div class="card">
+        <h3>Submit feedback</h3>
+        <form id="feedback-form">
+          <div class="field">
+            <label>Subject</label>
+            <input type="text" id="fb-subject" placeholder="Short summary" required />
+          </div>
+          <div class="grid grid-2">
+            <div class="field">
+              <label>Category</label>
+              <select id="fb-category">
+                <option value="prediction-quality">Prediction quality</option>
+                <option value="bug">Bug</option>
+                <option value="feature">Feature request</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Rating (optional)</label>
+              <select id="fb-rating">
+                <option value="">No rating</option>
+                <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                <option value="4">⭐⭐⭐⭐ Good</option>
+                <option value="3">⭐⭐⭐ Okay</option>
+                <option value="2">⭐⭐ Poor</option>
+                <option value="1">⭐ Very poor</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Message</label>
+            <textarea id="fb-message" placeholder="Describe what happened, or what you'd like to see…" required></textarea>
+          </div>
+          <div class="field">
+            <label>Related transaction ID (optional)</label>
+            <input type="number" id="fb-txn-id" placeholder="e.g. 1042" />
+          </div>
+          <button class="btn btn-primary" type="submit" id="fb-btn">Send feedback</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Recent feedback</h3>
+        <div id="fb-list"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/feedback.js"></script>
+</body>
+</html>

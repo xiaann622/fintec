@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — M-Pesa Intelligence System</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-root"></aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Overview</div>
+        <div class="page-sub">Real-time snapshot of transaction volume, behaviour and model health.</div>
+      </div>
+    </div>
+
+    <div class="grid grid-4 section" id="stat-cards">
+      <div class="card stat-card"><div class="spinner"></div></div>
+      <div class="card stat-card"><div class="spinner"></div></div>
+      <div class="card stat-card"><div class="spinner"></div></div>
+      <div class="card stat-card"><div class="spinner"></div></div>
+    </div>
+
+    <div class="grid grid-2 section">
+      <div class="card">
+        <h3>Category breakdown <span class="tag">All time</span></h3>
+        <div class="chart-box"><canvas id="chart-category"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Monthly inflow vs outflow <span class="tag">All history</span></h3>
+        <div class="chart-box"><canvas id="chart-monthly"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2 section">
+      <div class="card">
+        <h3>Transactions by time of day</h3>
+        <div class="chart-box small"><canvas id="chart-hour"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Weekday vs weekend behaviour</h3>
+        <div class="chart-box small"><canvas id="chart-weekend"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <h3>Recent transactions <span class="tag"><a href="transactions.html">View all →</a></span></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Details</th><th>Amount</th><th>Label</th><th>Classification</th><th>Category</th></tr></thead>
+          <tbody id="recent-rows"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/charts-common.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>

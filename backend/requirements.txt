@@ -1,0 +1,34 @@
+# --- Web framework ---
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9
+
+# --- Database ---
+sqlalchemy==2.0.30
+psycopg2-binary==2.9.9
+
+# --- Auth ---
+python-jose[cryptography]==3.3.0
+bcrypt==4.1.3
+pydantic[email]==2.7.1
+
+# --- ML / data (must match the versions used to train the .joblib artifacts
+#     as closely as possible to avoid unpickling issues) ---
+numpy==2.0.2
+pandas==2.2.2
+scipy==1.13.1
+scikit-learn==1.6.1
+imbalanced-learn==0.12.3
+xgboost==2.0.3
+joblib==1.5.3
+nltk==3.8.1
+
+# --- OCR / document ingestion ---
+pytesseract==0.3.10
+pdf2image==1.17.0
+pdfplumber==0.11.0
+Pillow==10.3.0
+openpyxl==3.1.2
+
+# --- Env ---
+python-dotenv==1.0.1

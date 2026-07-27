@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Categories — M-Pesa Intelligence System</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-root"></aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="page-title-el">Spending Categories</div>
+        <div class="page-sub">The business-meaning category used for behavioural analysis — Retail & Shopping, Travel & Leisure, Bills & Utilities, and more.</div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1.1fr 1fr; gap:18px;">
+      <div class="card">
+        <h3>Distribution by category</h3>
+        <div class="chart-box"><canvas id="facet-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Share of total <span class="tag">Click to drill in</span></h3>
+        <div id="facet-list"></div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="flex-between">
+        <h3 style="margin-bottom:4px;">Matching transactions</h3>
+        <span class="muted" id="drill-label"></span>
+      </div>
+      <div class="table-wrap" style="margin-top:10px;">
+        <table>
+          <thead><tr><th>Date</th><th>Details</th><th>Amount</th><th>Label</th><th>Classification</th><th>Category</th></tr></thead>
+          <tbody id="facet-txn-rows"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/charts-common.js"></script>
+<script>
+window.FACET_CONFIG = {
+  facetEndpoint: "/api/transactions/facets/categories",
+  facetKey: "category",
+  filterParam: "category",
+  title: "Spending Categories",
+};
+</script>
+<script src="js/facet-page.js"></script>
+</body>
+</html>

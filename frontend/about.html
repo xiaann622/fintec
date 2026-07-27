@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>About — M-Pesa Intelligence System</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-root"></aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">About this System</div>
+        <div class="page-sub">What it does, and how it's built.</div>
+      </div>
+    </div>
+
+    <div class="about-hero">
+      <h1>M-Pesa Transaction Intelligence</h1>
+      <p>
+        This platform turns raw M-Pesa statements — CSV exports, PDFs, or scanned/photographed
+        paper statements — into a structured, searchable ledger with automatic label,
+        classification and category tagging. Beyond simple categorization, it gives finance
+        teams a full behavioural view of a customer or business: when they transact, how
+        weekday activity compares to weekends, how spending moves through the month, and where
+        confidence in the model is low enough to warrant a manual look. It's built to help
+        finance companies extract transactions and understand transaction behaviour, accelerating
+        decisions like creditworthiness checks, KYC reviews and fraud triage.
+      </p>
+    </div>
+
+    <div class="grid grid-2 section">
+      <div class="card">
+        <h3>Ingestion pipeline</h3>
+        <div class="feature-item"><div class="num">1</div><div><strong>CSV / Excel</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">Parsed directly with column auto-mapping.</div></div></div>
+        <div class="feature-item"><div class="num">2</div><div><strong>Text-layer PDFs</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">Extracted with a text/table parser.</div></div></div>
+        <div class="feature-item"><div class="num">3</div><div><strong>Scanned PDFs & photos</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">Rasterised and read with OCR, then pattern-matched into structured rows.</div></div></div>
+      </div>
+      <div class="card">
+        <h3>Three-stage ML pipeline</h3>
+        <div class="feature-item"><div class="num">L</div><div><strong>Label</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">TF-IDF text features + 12 behavioural features (time-of-day, weekday/weekend, amount bands).</div></div></div>
+        <div class="feature-item"><div class="num">C</div><div><strong>Classification</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">TF-IDF + 13 features, using the predicted label as an input feature.</div></div></div>
+        <div class="feature-item"><div class="num">K</div><div><strong>Category</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">TF-IDF + 14 features, using both the predicted label and classification.</div></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-3 section">
+      <div class="card">
+        <h3>🔒 Security</h3>
+        <p class="muted" style="font-size:13px; line-height:1.6;">JWT-based authentication, hashed passwords, and role-based access. All API calls require a valid session token.</p>
+      </div>
+      <div class="card">
+        <h3>🏗️ Architecture</h3>
+        <p class="muted" style="font-size:13px; line-height:1.6;">FastAPI backend, Postgres 14 database, HTML/CSS/JS frontend, and a companion Streamlit analytics app — all deployable independently.</p>
+      </div>
+      <div class="card">
+        <h3>📈 Built for finance teams</h3>
+        <p class="muted" style="font-size:13px; line-height:1.6;">Bulk statement ingestion and instant behavioural analytics are designed to accelerate decisions that used to take manual review.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+</body>
+</html>

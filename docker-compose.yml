@@ -1,0 +1,74 @@
+version: "3.9"
+
+# -----------------------------------------------------------------------------
+# Full-stack deployment for the M-Pesa Intelligence System.
+#
+# You said you already have a Postgres 14 database with a populated
+# `transactions` table. In that case:
+#   1. Comment out (or delete) the `postgres` service below.
+#   2. Point backend + streamlit at your existing DB via the POSTGRES_*
+#      variables in backend/.env (or DATABASE_URL directly).
+#
+# If you'd rather run a fresh local Postgres for testing, keep the service —
+# it will initialise using database/schema.sql on first boot.
+# -----------------------------------------------------------------------------
+
+services:
+  postgres:
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mpesa_intel}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      POSTGRES_HOST: postgres  # overrides .env when using the bundled postgres service
+      ALLOWED_ORIGINS: "*"
+    volumes:
+      - ./backend/models_store:/app/models_store
+      - ./backend/uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  streamlit:
+    build: ./streamlit_app
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      POSTGRES_HOST: postgres
+    ports:
+      - "8501:8501"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

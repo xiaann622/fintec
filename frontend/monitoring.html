@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Monitoring — M-Pesa Intelligence System</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-root"></aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">System Monitoring</div>
+        <div class="page-sub">Model health, prediction confidence over time, category drift, and rows that need manual review.</div>
+      </div>
+    </div>
+
+    <div class="grid grid-4 section" id="mon-stat-cards">
+      <div class="card stat-card"><div class="spinner"></div></div>
+      <div class="card stat-card"><div class="spinner"></div></div>
+      <div class="card stat-card"><div class="spinner"></div></div>
+      <div class="card stat-card"><div class="spinner"></div></div>
+    </div>
+
+    <div class="card section">
+      <h3>Prediction confidence over time <span class="tag">last 30 days</span></h3>
+      <div class="chart-box"><canvas id="chart-confidence"></canvas></div>
+    </div>
+
+    <div class="grid grid-2 section">
+      <div class="card">
+        <h3>Category drift <span class="tag">last 30 vs prior 30 days</span></h3>
+        <div class="chart-box small"><canvas id="chart-drift"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Upload batch health</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>File</th><th>Status</th><th>Ingested</th><th>Failed</th></tr></thead>
+            <tbody id="mon-batches"><tr><td colspan="4" class="empty-state">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <h3>Low-confidence predictions <span class="tag">below 55% — flagged for review</span></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Details</th><th>Amount</th><th>Predicted Category</th><th>Confidence</th></tr></thead>
+          <tbody id="mon-lowconf"><tr><td colspan="5" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/charts-common.js"></script>
+<script src="js/monitoring.js"></script>
+</body>
+</html>
