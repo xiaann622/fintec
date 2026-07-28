@@ -41,6 +41,7 @@ class Settings:
     # See app/ml/category_overrides.py for the full explanation.
     ENABLE_CATEGORY_OVERRIDES: bool = os.getenv("ENABLE_CATEGORY_OVERRIDES", "true").lower() == "true"
     ENABLE_LABEL_OVERRIDES: bool = os.getenv("ENABLE_LABEL_OVERRIDES", "true").lower() == "true"
+    ENABLE_CLASSIFICATION_OVERRIDES: bool = os.getenv("ENABLE_CLASSIFICATION_OVERRIDES", "true").lower() == "true"
 
     # --- OCR ---
     TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", "tesseract")

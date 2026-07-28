@@ -40,7 +40,8 @@ from app.ml.preprocessing import preprocess_text
 from app.ml.feature_engineering import (
     transform_for_label, transform_for_classification, transform_for_category,
 )
-from app.ml.category_overrides import post_process_category, extract_business_name
+from app.ml.category_overrides import post_process_category, extract_business_name, apply_classification_category_rule
+from app.ml.classification_overrides import post_process_classification
 from app.ml.label_overrides import post_process_label
 
 logger = logging.getLogger("mpesa.ml")
@@ -160,6 +161,25 @@ def load_artifacts(force: bool = False):
             "ML artifacts missing (place .joblib files in %s): %s",
             settings.MODELS_DIR, missing,
         )
+
+    # Force single-threaded prediction on any ensemble model (e.g.
+    # RandomForestClassifier) that was pickled with n_jobs=-1 or n_jobs>1.
+    # Under uvicorn --reload on Windows, the server itself already runs as
+    # a spawned subprocess; letting joblib's loky backend spawn *further*
+    # worker subprocesses for every .predict() call is a well-known source
+    # of silent failures / pickling errors on Windows -- and it fails the
+    # same way on every single call, which is exactly the "every row comes
+    # back Unclassified" symptom. Single-threaded is negligibly slower here
+    # since predict_batch already runs one predict() call for the whole
+    # batch, not per row.
+    for key in ("label_model", "classif_model", "category_model"):
+        model = _ARTIFACTS.get(key)
+        if model is not None and hasattr(model, "n_jobs"):
+            try:
+                model.n_jobs = 1
+            except Exception:
+                pass
+
     _LOADED = True
     return _ARTIFACTS
 
@@ -249,7 +269,13 @@ def _predict_batch_row_by_row(d: pd.DataFrame, a: dict) -> list:
             row_df["transaction_label"] = label_val  # corrected label feeds downstream stages too
 
             X_cls = transform_for_classification(row_df, a["classif_tfidf"], a["label_feat_encoder"])
-            classif_val, classif_conf = _predict_stage(a["classif_model"], X_cls, a["classif_encoder"])
+            classif_val_raw, classif_conf = _predict_stage(a["classif_model"], X_cls, a["classif_encoder"])
+            if settings.ENABLE_CLASSIFICATION_OVERRIDES:
+                classif_val, classif_override_applied = post_process_classification(
+                    classif_val_raw, row_df["Details"].iloc[0]
+                )
+            else:
+                classif_val, classif_override_applied = classif_val_raw, False
             row_df["transaction_classification"] = classif_val
 
             X_cat = transform_for_category(
@@ -259,7 +285,9 @@ def _predict_batch_row_by_row(d: pd.DataFrame, a: dict) -> list:
 
             business_name = extract_business_name(row_df["Details"].iloc[0])
             if settings.ENABLE_CATEGORY_OVERRIDES:
-                cat_val, override_applied = post_process_category(cat_val_raw, row_df["Details"].iloc[0])
+                cat_val, applied_1 = apply_classification_category_rule(cat_val_raw, classif_val)
+                cat_val, applied_2 = post_process_category(cat_val, row_df["Details"].iloc[0])
+                override_applied = applied_1 or applied_2
             else:
                 cat_val, override_applied = cat_val_raw, False
 
@@ -270,6 +298,8 @@ def _predict_batch_row_by_row(d: pd.DataFrame, a: dict) -> list:
                 "transaction_label_raw_model": label_val_raw,
                 "label_override_applied": label_override_applied,
                 "transaction_classification": classif_val,
+                "transaction_classification_raw_model": classif_val_raw,
+                "classification_override_applied": classif_override_applied,
                 "transaction_category": cat_val,
                 "transaction_category_raw_model": cat_val_raw,
                 "category_override_applied": override_applied,
@@ -352,7 +382,22 @@ def predict_batch(df_input: pd.DataFrame) -> list:
         d["transaction_label"] = label_vals  # corrected label feeds downstream stages too
 
         X_cls = transform_for_classification(d, a["classif_tfidf"], a["label_feat_encoder"])
-        classif_vals, classif_confs = _predict_stage_batch(a["classif_model"], X_cls, a["classif_encoder"])
+        classif_vals_raw, classif_confs = _predict_stage_batch(a["classif_model"], X_cls, a["classif_encoder"])
+
+        if settings.ENABLE_CLASSIFICATION_OVERRIDES:
+            classif_vals = []
+            classif_override_applied = []
+            for i in range(n):
+                final_c, applied = post_process_classification(
+                    classif_vals_raw[i], d["Details"].iloc[i]
+                )
+                classif_vals.append(final_c)
+                classif_override_applied.append(applied)
+            classif_vals = np.array(classif_vals)
+        else:
+            classif_vals = classif_vals_raw
+            classif_override_applied = [False] * n
+
         d["transaction_classification"] = classif_vals
 
         X_cat = transform_for_category(
@@ -365,7 +410,9 @@ def predict_batch(df_input: pd.DataFrame) -> list:
             details_i = d["Details"].iloc[i]
             business_name = extract_business_name(details_i)
             if settings.ENABLE_CATEGORY_OVERRIDES:
-                cat_val, override_applied = post_process_category(cat_vals_raw[i], details_i)
+                cat_val, applied_1 = apply_classification_category_rule(cat_vals_raw[i], classif_vals[i])
+                cat_val, applied_2 = post_process_category(cat_val, details_i)
+                override_applied = applied_1 or applied_2
             else:
                 cat_val, override_applied = cat_vals_raw[i], False
 
@@ -377,6 +424,8 @@ def predict_batch(df_input: pd.DataFrame) -> list:
                 "transaction_label_raw_model": label_vals_raw[i],
                 "label_override_applied": label_override_applied[i],
                 "transaction_classification": classif_vals[i],
+                "transaction_classification_raw_model": classif_vals_raw[i],
+                "classification_override_applied": classif_override_applied[i],
                 "transaction_category": cat_val,
                 "transaction_category_raw_model": cat_vals_raw[i],
                 "category_override_applied": override_applied,

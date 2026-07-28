@@ -11,6 +11,11 @@ class UserCreate(BaseModel):
     company: Optional[str] = None
 
 
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class UserOut(BaseModel):
     id: int
     full_name: str

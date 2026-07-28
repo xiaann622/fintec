@@ -149,3 +149,55 @@ def post_process_category(predicted_category: str, details: str) -> tuple:
     except Exception:
         # Never let a malformed detail string break the pipeline.
         return predicted_category, False
+
+
+# ---------------------------------------------------------------------------
+# Deterministic label -> category rule, ported 1:1 from `assign_category_fixed`
+# (notebook cell 29). Unlike the business-name overrides above (which refine
+# ambiguous cases), category for THESE labels is a 100% deterministic
+# function of label in the training ground truth -- there's no keyword
+# judgment call involved, so the category model shouldn't be trusted over
+# this rule, especially for a label that post_process_label just corrected
+# (the category model never saw the corrected label/text combination during
+# training). 'Buy Goods' is deliberately excluded here: assign_category_fixed
+# only *defaults* it to Retail & Shopping, and the business-name overrides
+# above already provide a more specific Retail vs Travel & Leisure signal for
+# it -- forcing it here would bypass that finer-grained logic.
+# Category is a deterministic function of CLASSIFICATION (not label), per
+# architecture clarification: label and classification are independent,
+# each derived only from details; category depends on (details,
+# classification). This covers the full set of classification values --
+# mirroring assign_category_fixed()'s original label-keyed mapping, but
+# keyed on classification instead. 'Buy Goods' is deliberately excluded:
+# assign_category_fixed only *defaults* it to Retail & Shopping, and the
+# business-name overrides above already provide a more specific Retail vs
+# Travel & Leisure signal for it -- forcing it here would bypass that
+# finer-grained logic.
+_DETERMINISTIC_CLASSIFICATION_CATEGORY = {
+    "Airtime": "Utilities & Bills",
+    "Bundles": "Utilities & Bills",
+    "Transaction Fees": "Extra Charges",
+    "Mshwari": "Finance & Insurance",
+    "Interest": "Finance & Insurance",
+    "Withdraw": "Finance & Insurance",
+    "Fuliza": "Finance & Insurance",
+    "Send Money": "Peer to Peer",
+    "Receive Money": "Peer to Peer",
+    "Paybill": "Utilities & Bills",
+    "Pochi la Biashara": "Retail & Shopping",
+}
+
+
+def apply_classification_category_rule(predicted_category: str, transaction_classification: str) -> tuple:
+    """
+    Returns (final_category, override_applied: bool). Never raises.
+    Call this BEFORE post_process_category so the business-name refinement
+    (which only meaningfully applies to Buy Goods) still gets a chance to run.
+    """
+    try:
+        forced = _DETERMINISTIC_CLASSIFICATION_CATEGORY.get(transaction_classification)
+        if forced is not None and forced != predicted_category:
+            return forced, True
+        return predicted_category, False
+    except Exception:
+        return predicted_category, False
