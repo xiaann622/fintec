@@ -8,6 +8,35 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _resolve_models_dir() -> str:
+    """
+    A relative MODELS_DIR value (backend/.env.example ships
+    `MODELS_DIR=./models_store`) resolves relative to the process's current
+    working directory at import time -- which varies by how/where the
+    server is launched (uvicorn from the repo root vs. backend/, a process
+    manager with its own cwd, a Windows service, etc.) and is NOT
+    necessarily BASE_DIR.
+
+    If that directory doesn't exist, `os.makedirs(settings.MODELS_DIR,
+    exist_ok=True)` below silently creates an *empty* one, `_try_load()` in
+    app/ml/pipeline.py finds nothing there, and `artifacts_ready()` returns
+    False -- with only a server-log warning, nothing visible in the UI.
+    Every transaction then gets saved with null label/classification/
+    category, which the frontend renders as "Unclassified" / "--" for every
+    row (a *different* trigger for the same visible symptom as the
+    n_jobs/Windows-multiprocessing issue fixed elsewhere in this file).
+
+    Anchoring any relative MODELS_DIR to BASE_DIR (backend/) instead of CWD
+    makes `MODELS_DIR=./models_store` mean the same thing -- backend's own
+    models_store/ -- no matter where the process was started from.
+    """
+    raw = os.getenv("MODELS_DIR")
+    if not raw:
+        return str(BASE_DIR / "models_store")
+    p = Path(raw)
+    return str(p) if p.is_absolute() else str(BASE_DIR / p)
+
+
 class Settings:
     # --- Postgres (your existing DB 14, table `transactions`) ---
     POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
@@ -32,7 +61,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
     # --- ML model artifacts ---
-    MODELS_DIR: str = os.getenv("MODELS_DIR", str(BASE_DIR / "models_store"))
+    MODELS_DIR: str = _resolve_models_dir()
 
     # Applies the notebook's post_process_predictions() keyword-override layer
     # to transaction_category predictions (Cells 42/44, applied before every

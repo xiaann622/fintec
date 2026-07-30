@@ -75,9 +75,18 @@ class PredictTextIn(BaseModel):
 class PredictionResult(BaseModel):
     details: str
     details_nlp: str
-    transaction_label: str
-    transaction_classification: str
-    transaction_category: str
+    # Optional, not required str: a row whose prediction fails now returns
+    # None (see app/ml/pipeline.py's row-by-row fallback fix) rather than
+    # the old placeholder string "Unclassified". If these stayed required
+    # str fields, FastAPI/Pydantic would reject the whole response with a
+    # 500 on any failed row instead of returning it with nulls.
+    transaction_label: Optional[str] = None
+    transaction_label_raw_model: Optional[str] = None
+    label_override_applied: bool = False
+    transaction_classification: Optional[str] = None
+    transaction_classification_raw_model: Optional[str] = None
+    classification_override_applied: bool = False
+    transaction_category: Optional[str] = None
     transaction_category_raw_model: Optional[str] = None
     category_override_applied: bool = False
     counterparty_alias: Optional[str] = None

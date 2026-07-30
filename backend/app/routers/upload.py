@@ -124,6 +124,17 @@ async def upload_file(
                 confidence=pred.get(conf_key),
                 latency_ms=pred.get("latency_ms"),
             ))
+        # Surface per-row prediction failures somewhere queryable -- see
+        # GET /api/monitoring/prediction-errors. Previously the only trace
+        # was a server-log exception, invisible without hosting-platform
+        # log access. predicted_value is String(60), truncate defensively.
+        if pred.get("error"):
+            log_entries.append(PredictionLog(
+                transaction_id=txn.id, model_stage="error",
+                predicted_value=str(pred["error"])[:60],
+                confidence=None,
+                latency_ms=pred.get("latency_ms"),
+            ))
     db.add_all(log_entries)
 
     batch.rows_ingested = rows_ok

@@ -314,13 +314,29 @@ def _predict_batch_row_by_row(d: pd.DataFrame, a: dict) -> list:
                 i,
                 row_df["Details"].iloc[0] if "Details" in row_df.columns else "?",
             )
+            # FIX: this used to store the literal string "Unclassified" for
+            # transaction_label/classification/category on failure. That's
+            # actively harmful: (1) frontend/js/transactions.js renders
+            # `t.transaction_label || "—"`, so a real null shows as an
+            # honest "—" but the string "Unclassified" renders as if it
+            # were a legitimate model prediction, indistinguishable from
+            # real data; (2) it permanently poisons the label/
+            # classification/category filter dropdowns with a fake value;
+            # (3) most importantly, POST /api/predictions/backfill only
+            # re-queries rows WHERE transaction_label IS NULL, so a row
+            # that failed this way could never be retried automatically
+            # once the underlying error (e.g. the n_jobs/Windows-
+            # multiprocessing issue fixed above, or any other transient
+            # failure) was fixed. None keeps these rows honestly
+            # "unpredicted" and backfill-eligible. The real exception is
+            # preserved in "error" for the caller to log/persist.
             results.append({
                 "details": row_df["Details"].iloc[0] if "Details" in row_df.columns else "",
                 "details_nlp": row_df["details_nlp"].iloc[0] if "details_nlp" in row_df.columns else "",
-                "transaction_label": "Unclassified",
-                "transaction_classification": "Unclassified",
-                "transaction_category": "Unclassified",
-                "transaction_category_raw_model": "Unclassified",
+                "transaction_label": None,
+                "transaction_classification": None,
+                "transaction_category": None,
+                "transaction_category_raw_model": None,
                 "category_override_applied": False,
                 "counterparty_alias": None,
                 "label_confidence": None,

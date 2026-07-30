@@ -85,6 +85,36 @@ def low_confidence(
     ]
 
 
+@router.get("/prediction-errors")
+def prediction_errors(
+    limit: int = 50, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+):
+    """
+    Recent per-row prediction failures (model_stage='error'), written by
+    the upload/backfill routers whenever a row's prediction dict came back
+    with pred["error"] set -- see app/ml/pipeline.py's row-by-row fallback.
+    Direct way to see WHY a batch of rows ended up unclassified without
+    needing hosting-platform log access.
+    """
+    rows = (
+        db.query(PredictionLog, Transaction.details)
+        .join(Transaction, Transaction.id == PredictionLog.transaction_id)
+        .filter(PredictionLog.model_stage == "error")
+        .order_by(PredictionLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "transaction_id": log.transaction_id,
+            "details": details,
+            "error": log.predicted_value,
+            "created_at": log.created_at,
+        }
+        for log, details in rows
+    ]
+
+
 @router.get("/upload-batches")
 def upload_batches(
     limit: int = 20, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
