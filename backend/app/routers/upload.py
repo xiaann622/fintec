@@ -92,6 +92,7 @@ async def upload_file(
                 source_file=file.filename,
                 source_type=FILE_TYPE_MAP[ext],
                 uploaded_by=current_user.id,
+                upload_batch_id=batch.id,
             )
             if txn.completion_time is None:
                 rows_failed += 1
@@ -154,6 +155,50 @@ async def upload_file(
             else "Upload ingested. ML models are not yet loaded on the server, "
                  "so rows were stored without predictions — run /api/predictions/backfill later."
         ),
+    }
+
+
+@router.delete("/batches/{batch_id}")
+def delete_batch(
+    batch_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Deletes an upload batch AND everything it produced: its transactions and
+    their prediction logs. There's no DB-level cascade configured on these
+    foreign keys, so children are deleted explicitly, in dependency order,
+    before the parent -- otherwise the FK from Transaction.upload_batch_id
+    (or PredictionLog.transaction_id) would be left dangling.
+    """
+    batch = db.query(UploadBatch).filter(UploadBatch.id == batch_id).first()
+    if batch is None:
+        raise HTTPException(404, f"Upload batch {batch_id} not found.")
+
+    txn_ids = [
+        t.id for t in db.query(Transaction.id)
+        .filter(Transaction.upload_batch_id == batch_id).all()
+    ]
+
+    logs_deleted = 0
+    if txn_ids:
+        logs_deleted = (
+            db.query(PredictionLog)
+            .filter(PredictionLog.transaction_id.in_(txn_ids))
+            .delete(synchronize_session=False)
+        )
+        db.query(Transaction).filter(
+            Transaction.upload_batch_id == batch_id
+        ).delete(synchronize_session=False)
+
+    db.delete(batch)
+    db.commit()
+
+    return {
+        "deleted_batch_id": batch_id,
+        "filename": batch.filename,
+        "transactions_deleted": len(txn_ids),
+        "prediction_logs_deleted": logs_deleted,
     }
 
 

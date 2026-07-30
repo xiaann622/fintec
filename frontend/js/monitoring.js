@@ -97,9 +97,22 @@ async function loadBatchHealth() {
         <td><span class="badge ${statusBadge[b.status] || "badge-grey"}">${b.status}</span></td>
         <td>${b.rows_ingested}</td>
         <td>${b.rows_failed}</td>
-      </tr>`).join("") : `<tr><td colspan="4" class="empty-state">No uploads yet.</td></tr>`;
+        <td><button class="btn btn-secondary btn-sm" onclick="deleteBatch(${b.id}, ${JSON.stringify(b.filename)})">Delete</button></td>
+      </tr>`).join("") : `<tr><td colspan="5" class="empty-state">No uploads yet.</td></tr>`;
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="4" class="empty-state">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${err.message}</td></tr>`;
+  }
+}
+
+async function deleteBatch(batchId, filename) {
+  if (!confirm(`Delete "${filename}" and all its transactions? This can't be undone.`)) return;
+  try {
+    const r = await API.del(`/api/upload/batches/${batchId}`);
+    toast(`Deleted ${r.transactions_deleted} transaction(s) from "${r.filename}"`, "success");
+    loadBatchHealth();
+    loadMonStats();
+  } catch (err) {
+    toast(err.message, "error");
   }
 }
 

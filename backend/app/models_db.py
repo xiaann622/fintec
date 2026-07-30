@@ -52,6 +52,7 @@ class Transaction(Base):
     channel = Column(String(40), nullable=True)               # paybill/till/send money etc
 
     source_file = Column(String(255), nullable=True)
+    upload_batch_id = Column(Integer, ForeignKey("upload_batches.id"), nullable=True, index=True)
     source_type = Column(String(20), nullable=True)  # csv | excel | pdf | image | manual
     uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
