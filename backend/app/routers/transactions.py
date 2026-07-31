@@ -4,7 +4,7 @@ from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models_db import Transaction, User
+from app.models_db import Transaction, User, PredictionLog, UploadBatch
 from app.security import get_current_user
 
 router = APIRouter(prefix="/api/transactions", tags=["transactions"])
@@ -103,6 +103,46 @@ def facet_categories(db: Session = Depends(get_db), current_user: User = Depends
     rows = (db.query(Transaction.transaction_category, func.count(Transaction.id))
             .group_by(Transaction.transaction_category).all())
     return [{"category": r[0] or "Unclassified", "count": r[1]} for r in rows]
+
+
+@router.delete("/mine")
+def delete_my_transactions(db: Session = Depends(get_db),
+                            current_user: User = Depends(get_current_user)):
+    """
+    Deletes every transaction THIS user uploaded (uploaded_by == current
+    user), plus their prediction logs and now-empty upload batches -- so an
+    analyst can clear their own previous data before a fresh upload,
+    without touching anyone else's. Registered before /{txn_id} so "mine"
+    is matched here, not treated as an invalid int transaction id.
+    """
+    txn_ids = [
+        t.id for t in db.query(Transaction.id)
+        .filter(Transaction.uploaded_by == current_user.id).all()
+    ]
+
+    logs_deleted = 0
+    if txn_ids:
+        logs_deleted = (
+            db.query(PredictionLog)
+            .filter(PredictionLog.transaction_id.in_(txn_ids))
+            .delete(synchronize_session=False)
+        )
+        db.query(Transaction).filter(
+            Transaction.uploaded_by == current_user.id
+        ).delete(synchronize_session=False)
+
+    batches_deleted = (
+        db.query(UploadBatch)
+        .filter(UploadBatch.uploaded_by == current_user.id)
+        .delete(synchronize_session=False)
+    )
+
+    db.commit()
+    return {
+        "transactions_deleted": len(txn_ids),
+        "prediction_logs_deleted": logs_deleted,
+        "batches_deleted": batches_deleted,
+    }
 
 
 @router.delete("/{txn_id}")

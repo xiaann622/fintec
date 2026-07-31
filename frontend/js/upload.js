@@ -103,4 +103,32 @@ async function loadBatches() {
 document.addEventListener("DOMContentLoaded", () => {
   setupDropzone();
   loadBatches();
+
+  const clearBtn = document.getElementById("clear-mine-btn");
+  const clearResult = document.getElementById("clear-mine-result");
+  clearBtn.addEventListener("click", async () => {
+    if (!confirm(
+      "Delete ALL transactions you've previously uploaded? This keeps old data " +
+      "from mixing into a new analysis, but can't be undone. Other analysts' " +
+      "data is not affected."
+    )) return;
+
+    clearBtn.disabled = true;
+    clearBtn.textContent = "Clearing…";
+    try {
+      const r = await API.del("/api/transactions/mine");
+      clearResult.innerHTML = `
+        <div class="success-banner show">
+          ✅ Cleared ${r.transactions_deleted} transaction(s) across ${r.batches_deleted} previous upload(s).
+        </div>`;
+      toast("Your previous transactions were cleared", "success");
+      loadBatches();
+    } catch (err) {
+      clearResult.innerHTML = `<div class="error-banner show">${err.message}</div>`;
+      toast(err.message, "error");
+    } finally {
+      clearBtn.disabled = false;
+      clearBtn.textContent = "Clear my previous transactions";
+    }
+  });
 });

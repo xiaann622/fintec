@@ -4,7 +4,69 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Upload Statements — M-Pesa Intelligence System</title>
+<link <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Upload Statements — M-Pesa Intelligence System</title>
 <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-root"></aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Upload Statements</div>
+        <div class="page-sub">CSV, Excel, PDF (text or scanned) and JPEG/PNG images are all supported — OCR runs automatically on scans and photos.</div>
+      </div>
+      <button class="btn btn-danger btn-sm" id="clear-mine-btn">Clear my previous transactions</button>
+    </div>
+    <div id="clear-mine-result"></div>
+
+    <div class="grid" style="grid-template-columns:1.4fr 1fr; gap:18px;">
+      <div class="card">
+        <h3>Drop your file</h3>
+        <div class="dropzone" id="dropzone">
+          <div class="dz-icon">📥</div>
+          <div class="dz-title">Drag & drop a statement here, or click to browse</div>
+          <div class="dz-sub">.csv · .xlsx · .xls · .pdf · .jpg · .png — up to 25MB</div>
+          <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.pdf,.jpg,.jpeg,.png" hidden />
+        </div>
+        <div id="file-chip-wrap"></div>
+        <div class="progress-bar" id="progress-wrap" style="display:none;"><div id="progress-bar"></div></div>
+        <button class="btn btn-primary" style="margin-top:16px; width:auto; padding-left:26px; padding-right:26px;" id="upload-btn" disabled>Upload & Classify</button>
+        <div id="upload-result" style="margin-top:16px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>How it works</h3>
+        <div class="feature-item"><div class="num">1</div><div><strong>Extract</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">CSV/Excel are parsed directly; PDFs and images run through OCR to pull out receipt, date, details and amounts.</div></div></div>
+        <div class="feature-item"><div class="num">2</div><div><strong>Classify</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">Each row runs through the 3-stage pipeline: label → classification → category.</div></div></div>
+        <div class="feature-item"><div class="num">3</div><div><strong>Store & analyze</strong><div class="muted" style="font-size:12.5px; margin-top:2px;">Rows are written to Postgres and immediately available across Transactions, Trends and Monitoring.</div></div></div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <h3>Recent upload batches</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Type</th><th>Ingested</th><th>Failed</th><th>Status</th><th>When</th></tr></thead>
+          <tbody id="batches-rows"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/upload.js"></script>
+</body>
+</html>rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 <div class="app-shell">

@@ -97,61 +97,93 @@ def load_artifacts(force: bool = False):
     if _LOADED and not force:
         return _ARTIFACTS
 
-    _ARTIFACTS["label_model"] = _try_load(
-        "transaction_label_model.joblib",
-        "transaction_label_RandomForestClassifier_Label.joblib",
-    )
-    _ARTIFACTS["label_tfidf"] = _try_load(
-        "transaction_label_tfidf.joblib",
-        "transaction_label_tfidf_vectorizer.joblib",
-    )
-    _ARTIFACTS["label_encoder"] = _try_load(
-    "transaction_label_le_target.joblib",
-    "transaction_label_encoder.joblib",
-    "le_label_target.joblib",
-    )
+    # Preferred: a single combined file containing every artifact in one
+    # dict, keyed by the same names used internally here (label_model,
+    # label_tfidf, label_encoder, classif_model, classif_tfidf,
+    # classif_encoder, label_feat_encoder, category_model, category_tfidf,
+    # category_encoder, classif_feat_encoder). One file to add/replace/back
+    # up instead of eleven. If present, takes priority; anything it doesn't
+    # contain still falls back to the per-file layout below.
+    combined_path = _p("mpesa_models.joblib")
+    if os.path.exists(combined_path):
+        try:
+            bundle = joblib.load(combined_path)
+            _ARTIFACTS.update({k: v for k, v in bundle.items() if v is not None})
+            logger.info("Loaded ML artifacts from single combined file: %s", combined_path)
+        except Exception:
+            logger.exception(
+                "Failed to load combined artifact file %s -- falling back "
+                "to the individual per-file layout", combined_path
+            )
 
-    _ARTIFACTS["classif_model"] = _try_load(
-        "transaction_classification_model.joblib",
-        "transaction_classification_RandomForestClassifier_Classif.joblib",
-        "transaction_classification_LinearSVC_Classif.joblib",
-    )
-    _ARTIFACTS["classif_tfidf"] = _try_load(
-        "transaction_classification_tfidf.joblib",
-        "transaction_classification_tfidf_vectorizer.joblib",
-    )
-    _ARTIFACTS["classif_encoder"] = _try_load(
-    "transaction_classification_le_target.joblib",
-    "transaction_classification_encoder.joblib",
-    "le_classif_target.joblib",
-    )
+    # Per-file fallback layout (older format, or fills in anything the
+    # combined file above didn't have). Each line only runs if that key
+    # isn't already set.
+    if _ARTIFACTS.get("label_model") is None:
+        _ARTIFACTS["label_model"] = _try_load(
+            "transaction_label_model.joblib",
+            "transaction_label_RandomForestClassifier_Label.joblib",
+        )
+    if _ARTIFACTS.get("label_tfidf") is None:
+        _ARTIFACTS["label_tfidf"] = _try_load(
+            "transaction_label_tfidf.joblib",
+            "transaction_label_tfidf_vectorizer.joblib",
+        )
+    if _ARTIFACTS.get("label_encoder") is None:
+        _ARTIFACTS["label_encoder"] = _try_load(
+            "transaction_label_le_target.joblib",
+            "transaction_label_encoder.joblib",
+            "le_label_target.joblib",
+        )
+
+    if _ARTIFACTS.get("classif_model") is None:
+        _ARTIFACTS["classif_model"] = _try_load(
+            "transaction_classification_model.joblib",
+            "transaction_classification_RandomForestClassifier_Classif.joblib",
+            "transaction_classification_LinearSVC_Classif.joblib",
+        )
+    if _ARTIFACTS.get("classif_tfidf") is None:
+        _ARTIFACTS["classif_tfidf"] = _try_load(
+            "transaction_classification_tfidf.joblib",
+            "transaction_classification_tfidf_vectorizer.joblib",
+        )
+    if _ARTIFACTS.get("classif_encoder") is None:
+        _ARTIFACTS["classif_encoder"] = _try_load(
+            "transaction_classification_le_target.joblib",
+            "transaction_classification_encoder.joblib",
+            "le_classif_target.joblib",
+        )
 
     # label encoder used as an INPUT FEATURE to the classification model
-    _ARTIFACTS["label_feat_encoder"] = _try_load(
-    "transaction_classification_le_label_feature.joblib",
-    "label_feature_encoder.joblib",
-    "le_label_feat_for_classif.joblib",
-    ) or _ARTIFACTS["label_encoder"]
+    if _ARTIFACTS.get("label_feat_encoder") is None:
+        _ARTIFACTS["label_feat_encoder"] = _try_load(
+            "transaction_classification_le_label_feature.joblib",
+            "label_feature_encoder.joblib",
+            "le_label_feat_for_classif.joblib",
+        ) or _ARTIFACTS.get("label_encoder")
 
+    if _ARTIFACTS.get("category_model") is None:
+        _ARTIFACTS["category_model"] = _try_load(
+            "transaction_category_model.joblib",
+            "transaction_category_LogisticRegression.joblib",
+        )
+    if _ARTIFACTS.get("category_tfidf") is None:
+        _ARTIFACTS["category_tfidf"] = _try_load(
+            "transaction_category_tfidf.joblib",
+            "transaction_category_tfidf_vectorizer.joblib",
+        )
+    if _ARTIFACTS.get("category_encoder") is None:
+        _ARTIFACTS["category_encoder"] = _try_load(
+            "transaction_category_le_target.joblib",
+            "transaction_category_encoder.joblib",
+        )
 
-    _ARTIFACTS["category_model"] = _try_load(
-        "transaction_category_model.joblib",
-        "transaction_category_LogisticRegression.joblib",
-    )
-    _ARTIFACTS["category_tfidf"] = _try_load(
-        "transaction_category_tfidf.joblib",
-        "transaction_category_tfidf_vectorizer.joblib",
-    )
-    _ARTIFACTS["category_encoder"] = _try_load(
-    "transaction_category_le_target.joblib",
-    "transaction_category_encoder.joblib",
-    )
-
-    _ARTIFACTS["classif_feat_encoder"] = _try_load(
-    "transaction_category_le_classif_feature.joblib",
-    "classif_feature_encoder.joblib",
-    "le_classif_feat.joblib",
-    ) or _ARTIFACTS["classif_encoder"]
+    if _ARTIFACTS.get("classif_feat_encoder") is None:
+        _ARTIFACTS["classif_feat_encoder"] = _try_load(
+            "transaction_category_le_classif_feature.joblib",
+            "classif_feature_encoder.joblib",
+            "le_classif_feat.joblib",
+        ) or _ARTIFACTS.get("classif_encoder")
 
     missing = [k for k in ("label_model", "label_tfidf", "classif_model",
                             "classif_tfidf", "category_model", "category_tfidf")
