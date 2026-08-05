@@ -25,6 +25,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def no_cache_middleware(request, call_next):
+    """
+    Forces every API response to be non-cacheable. Without this, a browser
+    tab left open across many actions (uploads, deletes, backfills) can
+    silently keep serving an old cached response for a GET endpoint instead
+    of re-fetching -- e.g. a dashboard showing a stale total_transactions
+    count that doesn't reflect recent deletes, even after what looks like a
+    refresh. Counts/lists here should always reflect live DB state.
+    """
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    return response
+
 app.include_router(auth.router)
 app.include_router(upload.router)
 app.include_router(transactions.router)

@@ -72,6 +72,23 @@ async def upload_file(
         try:
             pred = predictions[i] if predictions else {}
 
+            # DEBUG
+            alias = pred.get("counterparty_alias")
+
+            if alias is not None:
+                alias = str(alias)
+
+                print("=" * 80)
+                print("Receipt:", row.get("receipt_no"))
+                print("Alias length:", len(alias))
+                print("Alias:", alias)
+                print("=" * 80)
+
+                if len(alias) > 80:
+                    raise ValueError(
+                        f"counterparty_alias too long ({len(alias)} chars): {alias}"
+                )
+
             txn = Transaction(
                 receipt_no=row.get("receipt_no"),
                 completion_time=row["completion_time"] if pd_notna(row.get("completion_time")) else None,
@@ -88,17 +105,20 @@ async def upload_file(
                 label_confidence=pred.get("label_confidence"),
                 classification_confidence=pred.get("classification_confidence"),
                 category_confidence=pred.get("category_confidence"),
-                counterparty_alias=pred.get("counterparty_alias"),
+                counterparty_alias=alias,
                 source_file=file.filename,
                 source_type=FILE_TYPE_MAP[ext],
                 uploaded_by=current_user.id,
                 upload_batch_id=batch.id,
-            )
+        )
+
             if txn.completion_time is None:
                 rows_failed += 1
                 continue
+
             txns_and_preds.append((txn, pred))
             rows_ok += 1
+
         except Exception as e:
             logger.warning("Row %s failed to build: %s", i, e)
             rows_failed += 1

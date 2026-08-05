@@ -93,15 +93,36 @@ async function loadBatchHealth() {
     const statusBadge = { completed: "badge-green", processing: "badge-gold", failed: "badge-red" };
     tbody.innerHTML = rows.length ? rows.map(b => `
       <tr>
-        <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;">${b.filename}</td>
+        <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(b.filename)}</td>
         <td><span class="badge ${statusBadge[b.status] || "badge-grey"}">${b.status}</span></td>
         <td>${b.rows_ingested}</td>
         <td>${b.rows_failed}</td>
-        <td><button class="btn btn-secondary btn-sm" onclick="deleteBatch(${b.id}, ${JSON.stringify(b.filename)})">Delete</button></td>
+        <td><button class="btn btn-secondary btn-sm" data-batch-id="${b.id}">Delete</button></td>
       </tr>`).join("") : `<tr><td colspan="5" class="empty-state">No uploads yet.</td></tr>`;
+
+    // Real event listeners instead of inline onclick -- an inline
+    // onclick="deleteBatch(${id}, ${JSON.stringify(filename)})" breaks the
+    // moment JSON.stringify's double-quoted string collides with the
+    // onclick attribute's own double quotes (the browser closes the
+    // attribute at the first inner quote, silently truncating/breaking the
+    // handler). Filename is looked up from the in-memory `rows` array at
+    // click time instead of being round-tripped through an HTML attribute
+    // at all, so this class of bug can't happen here.
+    const rowsById = Object.fromEntries(rows.map(b => [b.id, b]));
+    tbody.querySelectorAll("button[data-batch-id]").forEach(btn => {
+      const id = Number(btn.dataset.batchId);
+      btn.addEventListener("click", () => deleteBatch(id, rowsById[id]?.filename));
+    });
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${err.message}</td></tr>`;
   }
+}
+
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 async function deleteBatch(batchId, filename) {
